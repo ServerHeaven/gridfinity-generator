@@ -23,7 +23,7 @@ h1{font-size:22px;font-weight:700;letter-spacing:.02em}
 h1 span{color:var(--accent)}
 h2{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:var(--muted)}
 .num{font-family:var(--mono);font-variant-numeric:tabular-nums}
-.wrap{max-width:1440px;margin:0 auto;padding:14px 16px 48px;display:flex;flex-direction:column;gap:14px}
+.wrap{max-width:min(100%,3200px);margin:0 auto;padding:14px 16px 48px;display:flex;flex-direction:column;gap:14px}
 .topbar{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--panel);border:1px solid var(--line);border-radius:8px}
 .topbar .left,.topbar .right{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center}
 .seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--bg)}
@@ -91,7 +91,8 @@ body[data-mode="basico"] .advonly{display:none}
 .stage[data-tab="plano"] #gl,.stage[data-tab="plano"] .cam,.stage[data-tab="plano"] .hint{display:none}
 .stage .empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);padding:16px;text-align:center;pointer-events:none}
 .stage .hint{position:absolute;left:12px;bottom:10px;font-size:12px;color:var(--muted);pointer-events:none}
-.stage .cam{position:absolute;right:10px;top:10px;display:flex;gap:6px}
+.stage .cam{position:absolute;right:10px;top:10px;display:flex;gap:6px;align-items:center}
+.stage .cam select{background:var(--panel2,#1b2227);color:inherit;border:1px solid var(--line,#33414a);border-radius:6px;padding:4px 6px;font:inherit}
 .viewfoot{display:flex;gap:6px 20px;flex-wrap:wrap;font-size:13px;color:var(--muted);padding:9px 12px;border-top:1px solid var(--line);min-height:38px}
 .viewfoot b{color:var(--ink);font-family:var(--mono);font-weight:500}
 #plan .drawer{fill:none;stroke:var(--muted);stroke-dasharray:4 3}
@@ -135,6 +136,24 @@ td input.qty{width:62px;text-align:right;padding:3px 6px}
 .pill.ok{color:var(--ok)} .pill.bad{color:var(--bad)} .pill.wait{color:var(--muted)}
 .note{font-size:13px;color:var(--muted);max-width:80ch;margin:0}
 .hide{display:none!important}
+.ci{display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:5px 0;border-bottom:1px solid var(--line,#33414a)}
+.ci .nm{flex:1 1 100%;text-align:left;background:none;border:0;color:inherit;font:inherit;padding:4px 2px;cursor:pointer}
+.ci.sel .nm{color:var(--accent,#ff8a3d);font-weight:600}
+.ci label{display:flex;align-items:center;gap:3px;font-size:11px;opacity:.85}
+.ci label input{width:46px;background:var(--panel2,#1b2227);color:inherit;border:1px solid var(--line,#33414a);border-radius:5px;padding:3px 4px;font:inherit}
+.muted{opacity:.6;font-size:12px}.warnt{color:#ff8a3d}
+
+@media (min-width:1500px){
+  .cols{grid-template-columns:clamp(330px,17vw,420px) minmax(0,1fr)}
+  .work{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(480px,1fr);column-gap:14px;row-gap:14px;align-items:start}
+  .work>.viewcard{grid-column:1;grid-row:1/span 4;position:sticky;top:14px}
+  .work>.stats,.work>.msgs,.work>.card{grid-column:2}
+  .stage{height:clamp(480px,calc(100vh - 170px),1200px)}
+  .stats{grid-template-columns:repeat(3,1fr)}
+}
+@media (min-width:2400px){
+  .work{grid-template-columns:minmax(0,1.9fr) minmax(560px,1fr)}
+}
 </style>
 </head>
 <body data-mode="basico">
@@ -188,6 +207,14 @@ td input.qty{width:62px;text-align:right;padding:3px 6px}
         <div class="addrow"><input type="number" id="add-u" min="1" max="40" step="1" value="12" aria-label="Altura en U"><span>U</span><button type="button" class="small" id="add-height">Añadir altura</button></div>
       </div>
 
+      <div class="sec">
+        <div class="step"><b>04</b><h3>Cajas del cajón</h3></div>
+        <p>Elige las cajas una a una: cualquier planta y altura, mezcladas. Se ven en la vista «Cajón montado» y se generan sus STL. Col / fila fijan la posición (en blanco: automática).</p>
+        <div class="addrow"><input type="number" id="comp-w" min="1" max="12" step="1" value="2" aria-label="Ancho en celdas"><span>×</span><input type="number" id="comp-l" min="1" max="12" step="1" value="3" aria-label="Fondo en celdas"><span>·</span><input type="number" id="comp-u" min="1" max="40" step="1" value="6" aria-label="Altura en U"><span>U ·</span><input type="number" id="comp-n" min="1" max="50" step="1" value="1" aria-label="Cantidad"><span>uds</span></div>
+        <div class="addrow"><button type="button" class="small" id="comp-add">Añadir al cajón</button><button type="button" class="small ghost" id="comp-clear">Vaciar</button></div>
+        <div id="complist"></div>
+      </div>
+
       <div class="advonly">
         <div class="advhead"><h2>Editor avanzado · todas las cotas</h2><button type="button" class="small ghost" id="reset">Restablecer</button></div>
         <div class="adv" id="groups"></div>
@@ -208,8 +235,8 @@ td input.qty{width:62px;text-align:right;padding:3px 6px}
           <canvas id="gl"></canvas>
           <div id="planbox"><svg id="plan" role="img" aria-label="Plano del cajón con las placas base y los clips" preserveAspectRatio="xMidYMid meet"></svg></div>
           <div class="empty" id="viewempty">Preparando el motor de geometría…</div>
-          <div class="cam"><button type="button" class="small" data-cam="iso">Iso</button><button type="button" class="small" data-cam="top">Arriba</button><button type="button" class="small" data-cam="bottom">Abajo</button></div>
-          <div class="hint">Arrastra para girar · rueda para acercar</div>
+          <div class="cam"><select id="binview" class="small" aria-label="Cajas mostradas en el cajón"></select><button type="button" class="small" data-cam="iso">Iso</button><button type="button" class="small" data-cam="top">Arriba</button><button type="button" class="small" data-cam="bottom">Abajo</button></div>
+          <div class="hint" id="hint">Arrastra para girar · rueda para acercar</div>
         </div>
         <div class="viewfoot" id="viewmeta"></div>
       </section>
@@ -584,10 +611,12 @@ const STD_SIZES = [[1, 1], [1, 2], [1, 3], [1, 4], [2, 2], [2, 3], [2, 4], [3, 3
 const K_STATE = 'gridfinity30-v2-state', K_CFG = 'gridfinity30-v2-configs';
 const ls = { get(k) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { } } };
 
-let p = { ...DEF }, qtyO = {}, mode = 'basico', tab = 'montaje';
+function cleanComp(a) { return a.filter(c => c && c.w >= 1 && c.l >= 1 && c.u >= 1).slice(0, 300).map(c => ({ w: Math.round(c.w), l: Math.round(c.l), u: Math.round(c.u), i: Number.isInteger(c.i) ? c.i : null, j: Number.isInteger(c.j) ? c.j : null, rot: c.rot ? 1 : 0 })); }
+let comp = [], compSel = -1, lastPack = null;   // boxes chosen one by one: {w, l, u, i, j, rot}; i/j null = automatic position
+let p = { ...DEF }, qtyO = {}, mode = 'basico', tab = 'montaje', binShow = 'auto';
 let extraSizes = [], extraH = [];           // custom chips that stay visible after being switched off
 function applyParams(src) { p = { ...DEF }; if (src && typeof src === 'object') for (const k in DEF) if (typeof src[k] === typeof DEF[k]) p[k] = src[k]; }
-{ const s = ls.get(K_STATE); if (s) { applyParams(s.p); if (s.qty && typeof s.qty === 'object') qtyO = s.qty; if (s.mode === 'avanzado') mode = 'avanzado'; } }
+{ const s = ls.get(K_STATE); if (s) { applyParams(s.p); if (s.qty && typeof s.qty === 'object') qtyO = s.qty; if (Array.isArray(s.comp)) comp = cleanComp(s.comp); if (s.mode === 'avanzado') mode = 'avanzado'; } }
 
 function renderGroups() {
   $('groups').innerHTML = GROUPS.map(g => '<details><summary><h3>' + esc(g.title) + '</h3></summary><div class="fields">' + g.fields.map(f => {
@@ -649,20 +678,20 @@ function renderCfg(sel) {
 }
 $('cfg').addEventListener('change', () => {
   const n = $('cfg').value, c = ls.get(K_CFG) || {};
-  if (!n) { applyParams(null); qtyO = {}; } else if (c[n]) { applyParams(c[n].p); qtyO = { ...(c[n].qty || {}) }; }
+  if (!n) { applyParams(null); qtyO = {}; comp = []; } else if (c[n]) { applyParams(c[n].p); qtyO = { ...(c[n].qty || {}) }; comp = Array.isArray(c[n].comp) ? cleanComp(c[n].comp) : []; } compSel = -1;
   extraSizes = []; extraH = []; $('cfgname').value = n; $('cfgdel').disabled = !n; syncForm(); changed();
 });
 $('cfgsave').addEventListener('click', () => {
   const n = ($('cfgname').value || $('cfg').value || '').trim();
   if (!n) { dlMsg('', 'Escribe un nombre para guardar esta configuración.'); $('cfgname').focus(); return; }
-  const c = ls.get(K_CFG) || {}; c[n] = { p: { ...p }, qty: { ...qtyO } }; ls.set(K_CFG, c);
+  const c = ls.get(K_CFG) || {}; c[n] = { p: { ...p }, qty: { ...qtyO }, comp: comp.map(x => ({ ...x })) }; ls.set(K_CFG, c);
   renderCfg(n); dlMsg('ok', 'Configuración guardada en este navegador: ' + n);
 });
 $('cfgdel').addEventListener('click', () => { const n = $('cfg').value; if (!n) return; const c = ls.get(K_CFG) || {}; delete c[n]; ls.set(K_CFG, c); $('cfgname').value = ''; renderCfg(''); dlMsg('ok', 'Configuración borrada: ' + n); });
-$('cfgexp').addEventListener('click', () => save('gridfinity_cotas.json', new TextEncoder().encode(JSON.stringify({ p, qty: qtyO }, null, 2))));
+$('cfgexp').addEventListener('click', () => save('gridfinity_cotas.json', new TextEncoder().encode(JSON.stringify({ p, qty: qtyO, comp }, null, 2))));
 $('cfgimp').addEventListener('change', async e => {
   const f = e.target.files && e.target.files[0]; if (!f) return;
-  try { const j = JSON.parse(await f.text()); applyParams(j.p || j); qtyO = (j.qty && typeof j.qty === 'object') ? j.qty : {}; extraSizes = []; extraH = []; syncForm(); changed(); dlMsg('ok', 'Cotas cargadas de ' + f.name); }
+  try { const j = JSON.parse(await f.text()); applyParams(j.p || j); qtyO = (j.qty && typeof j.qty === 'object') ? j.qty : {}; comp = Array.isArray(j.comp) ? cleanComp(j.comp) : []; compSel = -1; extraSizes = []; extraH = []; syncForm(); changed(); dlMsg('ok', 'Cotas cargadas de ' + f.name); }
   catch (err) { dlMsg('bad', 'Ese archivo no es un JSON de cotas válido.'); }
   e.target.value = '';
 });
@@ -674,7 +703,7 @@ const pickKeys = keys => keys.map(k => p[k]).join('|');
 const BASE_KEYS = ['grid', 'cornerR', 'pc1', 'pv', 'pc2', 'baseHeight', 'slotDepth', 'clipLen', 'clipEnd', 'clipNeck', 'dogbone', 'postHalf', 'postH', 'arcSeg'];
 const CLIP_KEYS = ['slotDepth', 'clipTol', 'clipLen', 'clipEnd', 'clipNeck', 'clipChamfer'];
 const BIN_KEYS = ['grid', 'cornerR', 'pc1', 'pv', 'binClearance', 'binWall', 'binFloor', 'heightUnit', 'lipHeight', 'fc1', 'fv', 'fc2', 'relief', 'corner45', 'arcSeg'];
-function persist() { ls.set(K_STATE, { p, qty: qtyO, mode }); }
+function persist() { ls.set(K_STATE, { p, qty: qtyO, mode, comp }); }
 function changed() { persist(); clearTimeout(timer); timer = setTimeout(rebuild, 350); }
 const qtyOf = q => q.kind === 'base' ? 1 : (qtyO[q.name] != null ? qtyO[q.name] : q.qty0);
 
@@ -690,18 +719,23 @@ function rebuild() {
     L.plates.forEach(pl => parts.push({ kind: 'base', group: 'Bases', folder: 'Bases', name: pl.name, qty0: 1, plate: pl, key: 'B|' + pickKeys(BASE_KEYS) + '|' + JSON.stringify([pl.px0, pl.px1, pl.py0, pl.py1, pl.X0, pl.X1, pl.Y0, pl.Y1, pl.clips]), build: () => GF.buildPlate(M, p, L, pl), fits: fitsBed }));
     if (L.nClips) { if (qtyO.Clip_Union_Bowtie != null && qtyO.__clipsFor !== L.nClips) delete qtyO.Clip_Union_Bowtie; qtyO.__clipsFor = L.nClips; parts.push({ kind: 'clip', group: 'Clip', folder: 'Clip', name: 'Clip_Union_Bowtie', qty0: L.nClips, key: 'C|' + pickKeys(CLIP_KEYS), build: () => GF.buildClip(M, p), fits: fitsBed }); }
     const sizes = GF.parseSizes(p.binSizes), hs = GF.parseHeights(p.binHeights);
-    if (!sizes.length || !hs.length) msgs.push(['', 'No hay cajas que generar: marca al menos una planta y una altura.']);
-    for (const u of hs) for (const [w, l] of sizes) parts.push({ kind: 'bin', group: 'Cajas de ' + u + 'U', folder: 'Cajas_' + u + 'U', name: 'Caja_' + w + 'x' + l + '_' + u + 'U', qty0: 1, key: 'J|' + pickKeys(BIN_KEYS) + '|' + [w, l, u], build: () => GF.buildBin(M, p, L, w, l, u), fits: fitsBed });
-    if (p.corner45 && hs.some(u => u * p.heightUnit < 13)) msgs.push(['', 'Las cajas de 1U no tienen altura para la esquina a 45° y la conservan plana; revisa ese voladizo en el laminador.']);
+    const need = new Map(), kk = (w, l, u) => w + 'x' + l + '_' + u;
+    for (const u of hs) for (const [w, l] of sizes) need.set(kk(w, l, u), { w, l, u, cat: 1, n: 0 });
+    for (const c of comp) { const k = kk(c.w, c.l, c.u); if (need.has(k)) need.get(k).n++; else need.set(k, { w: c.w, l: c.l, u: c.u, cat: 0, n: 1 }); }
+    if (!need.size) msgs.push(['', 'No hay cajas que generar: marca al menos una planta y una altura, o añade cajas al cajón.']);
+    const order = [...need.values()].sort((a, b) => a.u - b.u || b.cat - a.cat || a.w - b.w || a.l - b.l);
+    for (const { w, l, u, cat, n } of order) parts.push({ kind: 'bin', group: 'Cajas de ' + u + 'U', folder: 'Cajas_' + u + 'U', name: 'Caja_' + w + 'x' + l + '_' + u + 'U', qty0: Math.max(cat, n), key: 'J|' + pickKeys(BIN_KEYS) + '|' + [w, l, u], build: () => GF.buildBin(M, p, L, w, l, u), fits: fitsBed });
+    if (p.corner45 && [...need.values()].some(b => b.u * p.heightUnit < 13)) msgs.push(['', 'Las cajas de 1U no tienen altura para la esquina a 45° y la conservan plana; revisa ese voladizo en el laminador.']);
   }
   for (const pt of parts) if (cache.has(pt.key)) pt.mesh = cache.get(pt.key);
   if (!parts.some(q => q.name === selected)) selected = parts.length ? parts[0].name : null;
-  renderMsgs(msgs); renderStats(); renderPlan(); renderRows(); showView();
+  renderMsgs(msgs); renderStats(); renderPlan(); renderRows(); renderComp(); showView();
   pump(runId);
 }
 function pump(id) {
   if (id !== runId || !M) { progress(); return; }
-  const next = parts.find(q => !q.mesh && !q.error && (tab === 'pieza' ? q.name === selected : q.kind === 'base')) || parts.find(q => !q.mesh && !q.error);
+  const want = q => tab === 'pieza' ? q.name === selected : q.kind === 'base' || q.kind === 'clip' || (tab === 'montaje' && viewNeeds(q));
+  const next = parts.find(q => !q.mesh && !q.error && want(q)) || parts.find(q => !q.mesh && !q.error);
   progress();
   if (!next) return;
   setTimeout(() => {
@@ -709,7 +743,7 @@ function pump(id) {
     try { next.mesh = next.build(); if (cache.size > 400) cache.clear(); cache.set(next.key, next.mesh); }
     catch (e) { next.error = String(e && e.message || e); }
     updateRow(next); renderStats();
-    if ((tab === 'pieza' && next.name === selected) || (tab === 'montaje' && next.kind !== 'bin')) showView();
+    if ((tab === 'pieza' && next.name === selected) || (tab === 'montaje' && (next.kind !== 'bin' || viewNeeds(next)))) showView();
     pump(id);
   }, 0);
 }
@@ -803,8 +837,80 @@ function setTab(t) { tab = t; $('stage').dataset.tab = t; document.querySelector
 document.querySelectorAll('button[data-tab]').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
 document.querySelectorAll('button[data-cam]').forEach(b => b.addEventListener('click', () => viewer.cam(b.dataset.cam)));
 
+const cssHexStr = c => { const n = parseInt(c.slice(1), 16); return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255]; };
 const cssHex = name => { const c = getComputedStyle(document.documentElement).getPropertyValue(name).trim(), n = parseInt(c.slice(1), 16); return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255]; };
+
+const BIN_COLORS = ['#e8935a', '#d9b45a', '#8fb86a', '#5fb3a1', '#b583c9', '#d06f7e'];
+const hashName = n => { let h = 0; for (const c of n) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h; };
+const compName = c => 'Caja_' + c.w + 'x' + c.l + '_' + c.u + 'U';
+function viewSel() {
+  const hs = GF.parseHeights(p.binHeights); let v = binShow;
+  if (v === 'auto') v = comp.length ? 'comp' : (hs.length ? String(hs[0]) : 'none');
+  if (v === 'none') return { m: 'none' };
+  if (v === 'comp') { if (comp.length) return { m: 'comp' }; v = hs.length ? String(hs[0]) : 'none'; if (v === 'none') return { m: 'none' }; }
+  const n = +v; return { m: 'cat', h: hs.includes(n) ? n : hs[0] };
+}
+const viewNeeds = q => { const v = viewSel(); return q.kind === 'bin' && (v.m === 'comp' ? comp.some(c => compName(c) === q.name) : v.m === 'cat' && q.name.endsWith('_' + v.h + 'U')); };
+function renderBinView() {
+  const hs = GF.parseHeights(p.binHeights), sel = $('binview'), v = viewSel();
+  sel.innerHTML = '<option value="none">Sin cajas</option>' + (comp.length ? '<option value="comp">Mi composición (' + comp.length + ')</option>' : '') + hs.map(h => '<option value="' + h + '">Catálogo de ' + h + 'U</option>').join('');
+  sel.value = v.m === 'none' ? 'none' : v.m === 'comp' ? 'comp' : String(v.h);
+}
+$('binview').addEventListener('change', e => { binShow = e.target.value; showView(); if (M) pump(runId); });
+// packing on the cell grid: manual positions first, then first-fit in the given order
+function pack(list) {
+  const occ = Array.from({ length: L.cols }, () => new Array(L.rows).fill(false)), out = [], skipped = [];
+  const fits = (i, j, w, l) => { if (i < 0 || j < 0 || i + w > L.cols || j + l > L.rows) return false; for (let a = 0; a < w; a++) for (let c = 0; c < l; c++) if (occ[i + a][j + c]) return false; return true; };
+  const put = (it, i, j, w, l, rot) => { for (let a = 0; a < w; a++) for (let c = 0; c < l; c++) occ[i + a][j + c] = true; out.push({ it, i, j, rot }); };
+  const pending = [];
+  for (const it of list) {
+    if (it.i != null && it.j != null) { const rot = it.rot ? 1 : 0, w = rot ? it.l : it.w, l = rot ? it.w : it.l; if (fits(it.i, it.j, w, l)) put(it, it.i, it.j, w, l, rot); else skipped.push(it); }
+    else pending.push(it);
+  }
+  for (const it of pending) {
+    let done = false;
+    for (const rot of it.w === it.l ? [0] : it.rot ? [1, 0] : [0, 1]) {
+      const w = rot ? it.l : it.w, l = rot ? it.w : it.l;
+      for (let j = 0; j + l <= L.rows && !done; j++) for (let i = 0; i + w <= L.cols && !done; i++) if (fits(i, j, w, l)) { put(it, i, j, w, l, rot); done = true; }
+      if (done) break;
+    }
+    if (!done) skipped.push(it);
+  }
+  let free = 0; for (const col of occ) for (const v of col) if (!v) free++;
+  return { out, skipped, free };
+}
+function catalogList(h) {
+  const list = [];
+  parts.filter(q => q.kind === 'bin' && q.name.endsWith('_' + h + 'U')).map(q => { const m = q.name.match(/^Caja_(\d+)x(\d+)_/); return { q, w: +m[1], l: +m[2] }; }).sort((a, b) => b.w * b.l - a.w * a.l || b.l - a.l).forEach(b => { for (let n = qtyOf(b.q); n > 0; n--) list.push({ name: b.q.name, w: b.w, l: b.l, u: h }); });
+  return list;
+}
+function renderComp() {
+  const maxc = L && !L.err.length ? L.cols : 99, maxr = L && !L.err.length ? L.rows : 99;
+  $('complist').innerHTML = comp.length ? comp.map((c, n) => '<div class="ci' + (n === compSel ? ' sel' : '') + '" data-n="' + n + '"><button type="button" class="nm" data-act="sel" title="Resaltar en el cajón">' + (n + 1) + ' · ' + c.w + '×' + c.l + ' · ' + c.u + 'U' + (c.rot ? ' ↻' : '') + '</button>'
+    + '<label>col<input type="number" min="1" max="' + maxc + '" step="1" value="' + (c.i == null ? '' : c.i + 1) + '" placeholder="auto" data-pos="i" aria-label="Columna de la caja ' + (n + 1) + '"></label>'
+    + '<label>fila<input type="number" min="1" max="' + maxr + '" step="1" value="' + (c.j == null ? '' : c.j + 1) + '" placeholder="auto" data-pos="j" aria-label="Fila de la caja ' + (n + 1) + '"></label>'
+    + '<button type="button" class="small" data-act="rot" title="Girar 90°">Girar</button><button type="button" class="small" data-act="del" aria-label="Quitar la caja ' + (n + 1) + '">×</button></div>').join('') : '<p class="muted">Aún no has elegido ninguna. Añade cajas con el formulario de arriba.</p>';
+}
+function compChanged() { renderComp(); persist(); changed(); }
+$('comp-add').addEventListener('click', () => {
+  const w = Math.round(+$('comp-w').value), l = Math.round(+$('comp-l').value), u = Math.round(+$('comp-u').value), n = Math.max(1, Math.min(50, Math.round(+$('comp-n').value || 1)));
+  if (!(w >= 1 && l >= 1 && w <= 12 && l <= 12 && u >= 1 && u <= 40)) return;
+  for (let k = 0; k < n; k++) comp.push({ w, l, u, i: null, j: null, rot: 0 });
+  compSel = comp.length - 1; binShow = 'comp'; compChanged();
+});
+$('comp-clear').addEventListener('click', () => { comp = []; compSel = -1; compChanged(); });
+$('complist').addEventListener('click', e => {
+  const row = e.target.closest('.ci'), b = e.target.closest('button[data-act]'); if (!row || !b) return; const n = +row.dataset.n;
+  if (b.dataset.act === 'del') { comp.splice(n, 1); compSel = -1; compChanged(); }
+  else if (b.dataset.act === 'rot') { comp[n].rot = comp[n].rot ? 0 : 1; compSel = n; compChanged(); }
+  else { compSel = compSel === n ? -1 : n; renderComp(); showView(); }
+});
+$('complist').addEventListener('change', e => {
+  const inp = e.target.closest('input[data-pos]'); if (!inp) return; const n = +inp.closest('.ci').dataset.n, v = Math.round(+inp.value);
+  comp[n][inp.dataset.pos] = inp.value === '' || !(v >= 1) ? null : v - 1; compSel = n; persist(); renderComp(); showView();
+});
 function showView() {
+  viewer.setPick([]); $('hint').textContent = 'Arrastra para girar · rueda para acercar';
   const empty = t => { $('viewempty').style.display = t ? 'flex' : 'none'; $('viewempty').textContent = t || ''; };
   if (!L || L.err.length) { $('viewname').textContent = ''; $('viewsub').textContent = ''; $('viewmeta').innerHTML = ''; viewer.setScene([], 'none'); empty('Corrige las cotas marcadas para ver el resultado.'); return; }
   if (tab === 'plano') { $('viewname').textContent = 'Plano del troceado'; $('viewsub').textContent = fmt(p.drawerW, 1) + ' × ' + fmt(p.drawerD, 1) + ' mm · frente abajo'; $('viewmeta').innerHTML = '<span>Pulsa una placa para seleccionarla. Los rombos naranjas son los clips de unión.</span>'; empty(''); return; }
@@ -816,9 +922,23 @@ function showView() {
     const cA = cssHex('--plateA'), cB = cssHex('--plateB'), cS = cssHex('--accent');
     for (const q of ready) items.push({ mesh: q.mesh, color: q.name === selected ? cS : ((q.plate.row + q.plate.col) % 2 ? cA : cB) });
     if (clip && clip.mesh && ready.length === bases.length) { const cc = cssHex('--clipc'); for (const [x, y] of L.vclips) items.push({ mesh: clip.mesh, color: cc, t: [x, y, 0], r: 0 }); for (const [x, y] of L.hclips) items.push({ mesh: clip.mesh, color: cc, t: [x, y, 0], r: 1 }); }
+    renderBinView();
+    const vs = viewSel(); let binInfo = '';
+    if (vs.m !== 'none') {
+      const picks = []; const list = vs.m === 'comp' ? comp.map((c, n) => ({ ...c, name: compName(c), n })) : catalogList(vs.h), pk = pack(list), G = p.grid; let nb = 0;
+      for (const o of pk.out) {
+        const q = parts.find(x => x.name === o.it.name); if (!q || !q.mesh) continue; nb++;
+        const hot = vs.m === 'comp' && o.it.n === compSel;
+        const wc = o.rot ? o.it.l : o.it.w, lc = o.rot ? o.it.w : o.it.l;
+        if (vs.m === 'comp') picks.push({ n: o.it.n, x0: L.ox + G * o.i, y0: L.oy + G * o.j, x1: L.ox + G * (o.i + wc), y1: L.oy + G * (o.j + lc), z1: q.mesh.max[2], i: o.i, j: o.j, G });
+        items.push({ mesh: q.mesh, color: hot ? cS : cssHexStr(BIN_COLORS[hashName(o.it.name) % BIN_COLORS.length]), t: o.rot ? [L.ox + G * (o.i + o.it.l), L.oy + G * o.j, 0] : [L.ox + G * o.i, L.oy + G * o.j, 0], r: o.rot });
+      }
+      lastPack = pk; viewer.setPick(picks); if (picks.length) $('hint').textContent = 'Arrastra una caja para moverla · arrastra el fondo para girar · rueda para acercar';
+      binInfo = '<span>' + (vs.m === 'comp' ? 'Mi composición' : 'Catálogo de ' + vs.h + 'U') + ' <b>' + nb + ' / ' + pk.out.length + '</b> cajas</span>' + (pk.skipped.length ? '<span class="warnt">' + pk.skipped.length + ' sin sitio en la rejilla</span>' : '') + '<span>Casillas libres <b>' + pk.free + '</b></span>';
+    }
     viewer.setScene(items, 'm|' + p.drawerW + '|' + p.drawerD);
     empty(!M ? (wasmError || 'Preparando el motor de geometría…') : ready.length ? '' : 'Generando las bases…');
-    $('viewmeta').innerHTML = '<span>Cajón <b>' + fmt(p.drawerW, 1) + ' × ' + fmt(p.drawerD, 1) + ' mm</b></span><span>Rejilla <b>' + L.cols + ' × ' + L.rows + '</b></span><span>Placas listas <b>' + ready.length + ' / ' + bases.length + '</b></span><span>Los clips se ven desde abajo</span>';
+    $('viewmeta').innerHTML = '<span>Cajón <b>' + fmt(p.drawerW, 1) + ' × ' + fmt(p.drawerD, 1) + ' mm</b></span><span>Rejilla <b>' + L.cols + ' × ' + L.rows + '</b></span><span>Placas listas <b>' + ready.length + ' / ' + bases.length + '</b></span><span>Los clips se ven desde abajo</span>' + binInfo;
     return;
   }
   const q = parts.find(x => x.name === selected), m = q && q.mesh;
@@ -843,15 +963,32 @@ const viewer = (() => {
   const mul = (a, b) => { const o = new Float32Array(16); for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) o[c * 4 + r] = a[r] * b[c * 4] + a[4 + r] * b[c * 4 + 1] + a[8 + r] * b[c * 4 + 2] + a[12 + r] * b[c * 4 + 3]; return o; };
   const norm = v => { const l = Math.hypot(v[0], v[1], v[2]) || 1; return [v[0] / l, v[1] / l, v[2] / l]; };
   const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+  function basis() {
+    const dir = [Math.cos(el) * Math.cos(az), Math.cos(el) * Math.sin(az), Math.sin(el)], eye = [ctr[0] + dir[0] * dist, ctr[1] + dir[1] * dist, ctr[2] + dir[2] * dist];
+    const upv = Math.abs(el) > 1.5 ? [-Math.cos(az), -Math.sin(az), 0].map(v => v * Math.sign(el)) : [0, 0, 1];
+    const f = norm([-dir[0], -dir[1], -dir[2]]), s = norm(cross(f, upv)), u = cross(s, f);
+    return { dir, eye, f, s, u };
+  }
+  const rayOf = e => {
+    const r = cv.getBoundingClientRect(), { eye, f, s, u } = basis(), t = Math.tan(0.25), a = r.width / Math.max(1, r.height);
+    const nx = 2 * (e.clientX - r.left) / r.width - 1, ny = 1 - 2 * (e.clientY - r.top) / r.height;
+    return { o: eye, d: norm([f[0] + s[0] * nx * t * a + u[0] * ny * t, f[1] + s[1] * nx * t * a + u[1] * ny * t, f[2] + s[2] * nx * t * a + u[2] * ny * t]) };
+  };
+  const planeHit = (r, z) => Math.abs(r.d[2]) < 1e-6 ? null : (t => t > 0 ? [r.o[0] + r.d[0] * t, r.o[1] + r.d[1] * t] : null)((z - r.o[2]) / r.d[2]);
+  const slab = (r, b) => {
+    let t0 = 0, t1 = 1e18; const mn = [b.x0, b.y0, 0], mx = [b.x1, b.y1, b.z1];
+    for (let k = 0; k < 3; k++) { if (Math.abs(r.d[k]) < 1e-9) { if (r.o[k] < mn[k] || r.o[k] > mx[k]) return null; continue; } let a = (mn[k] - r.o[k]) / r.d[k], c = (mx[k] - r.o[k]) / r.d[k]; if (a > c) [a, c] = [c, a]; t0 = Math.max(t0, a); t1 = Math.min(t1, c); if (t0 > t1) return null; }
+    return t0;
+  };
+  let picks = [], hooks = {}, grab = null;
+  const pickAt = e => { const r = rayOf(e); let best = null, bt = 1e18; for (const b of picks) { const t = slab(r, b); if (t != null && t < bt) { bt = t; best = b; } } return best ? { b: best, t: bt, r } : null; };
   function draw() {
     raf = 0; if (!gl) return;
     const dpr = Math.min(2, window.devicePixelRatio || 1), w = Math.max(1, Math.round(cv.clientWidth * dpr)), h = Math.max(1, Math.round(cv.clientHeight * dpr));
     if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
     gl.viewport(0, 0, w, h); gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     if (!count) return;
-    const dir = [Math.cos(el) * Math.cos(az), Math.cos(el) * Math.sin(az), Math.sin(el)], eye = [ctr[0] + dir[0] * dist, ctr[1] + dir[1] * dist, ctr[2] + dir[2] * dist];
-    const upv = Math.abs(el) > 1.5 ? [-Math.cos(az), -Math.sin(az), 0].map(v => v * Math.sign(el)) : [0, 0, 1];
-    const f = norm([-dir[0], -dir[1], -dir[2]]), s = norm(cross(f, upv)), u = cross(s, f);
+    const { dir, eye, f, s, u } = basis();
     const V = new Float32Array([s[0], u[0], -f[0], 0, s[1], u[1], -f[1], 0, s[2], u[2], -f[2], 0, -(s[0] * eye[0] + s[1] * eye[1] + s[2] * eye[2]), -(u[0] * eye[0] + u[1] * eye[1] + u[2] * eye[2]), f[0] * eye[0] + f[1] * eye[1] + f[2] * eye[2], 1]);
     const fov = 0.5, near = Math.max(0.5, dist - rad * 2), far = dist + rad * 2, t = 1 / Math.tan(fov / 2);
     const P = new Float32Array([t / (w / h), 0, 0, 0, 0, t, 0, 0, 0, 0, (far + near) / (near - far), -1, 0, 0, 2 * far * near / (near - far), 0]);
@@ -884,16 +1021,40 @@ const viewer = (() => {
     if (n && key !== sceneKey) { sceneKey = key; ctr = [(mn[0] + mx[0]) / 2, (mn[1] + mx[1]) / 2, (mn[2] + mx[2]) / 2]; rad = Math.hypot(mx[0] - mn[0], mx[1] - mn[1], mx[2] - mn[2]) / 2; dist = rad * 3.3; }
     req();
   }
-  function cam(v) { if (v === 'top') { az = -Math.PI / 2; el = 1.5607; } else if (v === 'bottom') { az = -Math.PI / 2; el = -1.5607; } else { az = -0.9; el = 0.75; } dist = rad * 3.3; req(); }
+  function cam(v) { if (v === 'top') { az = -Math.PI / 2; el = 1.5607; } else if (v === 'bottom') { az = -Math.PI / 2; el = -1.5607; } else { az = -0.9; el = 0.75; } dist = rad * (v === 'iso' ? 3.3 : 3.9); req(); }
   let drag = null;
-  cv.addEventListener('pointerdown', e => { drag = [e.clientX, e.clientY]; cv.setPointerCapture(e.pointerId); cv.style.cursor = 'grabbing'; });
-  cv.addEventListener('pointermove', e => { if (!drag) return; az -= (e.clientX - drag[0]) * 0.008; el = Math.max(-1.5607, Math.min(1.5607, el + (e.clientY - drag[1]) * 0.008)); drag = [e.clientX, e.clientY]; req(); });
-  const up = () => { drag = null; cv.style.cursor = 'grab'; };
+  cv.addEventListener('pointerdown', e => {
+    const h = picks.length ? pickAt(e) : null;
+    cv.setPointerCapture(e.pointerId);
+    if (h) { const z = h.r.o[2] + h.r.d[2] * h.t; grab = { b: h.b, z, start: planeHit(h.r, z), i0: h.b.i, j0: h.b.j, last: null }; cv.style.cursor = 'grabbing'; if (hooks.onGrab) hooks.onGrab(h.b.n); return; }
+    drag = [e.clientX, e.clientY]; cv.style.cursor = 'grabbing';
+  });
+  cv.addEventListener('pointermove', e => {
+    if (grab) { const pt = grab.start && planeHit(rayOf(e), grab.z); if (pt) { const G = grab.b.G, i = grab.i0 + Math.round((pt[0] - grab.start[0]) / G), j = grab.j0 + Math.round((pt[1] - grab.start[1]) / G), k = i + ',' + j; if (k !== grab.last) { grab.last = k; if (hooks.onMove) hooks.onMove(grab.b.n, i, j); } } return; }
+    if (!drag) { cv.style.cursor = picks.length && pickAt(e) ? 'move' : 'grab'; return; }
+    az -= (e.clientX - drag[0]) * 0.008; el = Math.max(-1.5607, Math.min(1.5607, el + (e.clientY - drag[1]) * 0.008)); drag = [e.clientX, e.clientY]; req();
+  });
+  const up = () => { if (grab) { grab = null; if (hooks.onDrop) hooks.onDrop(); } drag = null; cv.style.cursor = 'grab'; };
   cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
   cv.addEventListener('wheel', e => { e.preventDefault(); dist = Math.max(rad * 0.6, Math.min(rad * 12, dist * Math.exp(e.deltaY * 0.0012))); req(); }, { passive: false });
   if (window.ResizeObserver) new ResizeObserver(req).observe(cv);
-  return { setScene, cam };
+  return { setScene, cam, setPick: l => { picks = l; }, hooks };
 })();
+
+// dragging boxes in the 3D view: the first grab freezes every placed box at its current cell, then the grabbed one follows the cursor on the grid
+viewer.hooks.onGrab = n => {
+  if (lastPack) for (const o of lastPack.out) { const c = comp[o.it.n]; if (c) { c.i = o.i; c.j = o.j; c.rot = o.rot ? 1 : 0; } }
+  compSel = n; renderComp(); showView();
+};
+viewer.hooks.onMove = (n, i, j) => {
+  const c = comp[n]; if (!c || !L) return;
+  const w = c.rot ? c.l : c.w, l = c.rot ? c.w : c.l;
+  if (i < 0 || j < 0 || i + w > L.cols || j + l > L.rows) return;
+  for (let k = 0; k < comp.length; k++) { const d = comp[k]; if (k === n || d.i == null || d.j == null) continue; const dw = d.rot ? d.l : d.w, dl = d.rot ? d.w : d.l; if (i < d.i + dw && d.i < i + w && j < d.j + dl && d.j < j + l) return; }
+  if (c.i === i && c.j === j) return;
+  c.i = i; c.j = j; renderComp(); showView();
+};
+viewer.hooks.onDrop = () => { persist(); };
 
 // ------------------------------------------------------------------ downloads
 const hosted = !!(window.claude && typeof window.claude.use === 'function');
@@ -937,7 +1098,7 @@ $('zipall').addEventListener('click', () => {
   const enc = new TextEncoder(), root = 'Gridfinity' + p.grid + '/', list = parts.filter(q => q.mesh && qtyOf(q) > 0);
   const files = list.map(q => ({ name: root + 'STL/' + q.folder + '/' + fileName(q), data: GF.stl(q.mesh) }));
   files.push({ name: root + 'LEEME.txt', data: enc.encode(readme(list)) });
-  files.push({ name: root + 'cotas.json', data: enc.encode(JSON.stringify({ p, qty: qtyO }, null, 2)) });
+  files.push({ name: root + 'cotas.json', data: enc.encode(JSON.stringify({ p, qty: qtyO, comp }, null, 2)) });
   save('Gridfinity' + p.grid + '_STL.zip', GF.zip(files));
 });
 
