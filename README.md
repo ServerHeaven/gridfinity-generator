@@ -49,7 +49,7 @@ En **«Cajas del cajón»** eliges cajas individuales, mezclando plantas y altur
 
 Estimación orientativa (paredes + relleno, no un laminado real):
 
-- **Filamento** en gramos, **tiempo de impresión**, número aproximado de **tandas de cama**, **coste** (filamento + electricidad) y tiempo y coste por pieza en la tabla.
+- **Filamento** en gramos, **tiempo de impresión**, **consumo eléctrico (kWh)**, número aproximado de **tandas de cama**, **coste** (filamento + electricidad) y tiempo y coste por pieza en la tabla.
 - Por defecto: filamento a **11 €/kg**, electricidad a 0,20 €/kWh, impresora a 110 W de media. Cámbialos en la sección «Coste y tiempo».
 - En «Avanzado» ajustas el caudal de impresión, la fracción real de material respecto al macizo, el tiempo extra por capa y la preparación por tanda.
 
@@ -84,7 +84,7 @@ Web generator for **Gridfinity baseplates, clips and bins on a 30 mm pitch**, de
 - Default values: 292 × 520 mm drawer, 256 mm bed, 30 mm grid → 9 × 17 cells, 6 plates, 21 clips (reference values: change them to your drawer).
 - **Basic** and **Advanced** modes, assembled-drawer 3D view, plan view, saved configurations (export/import JSON), quantities per part, ZIP + single STL downloads.
 - Pick bins **one by one** and **drag them** around the grid in the 3D view; a warning appears when a bin does not fit the printer bed.
-- Estimated **filament, print time, cost** (filament at €11/kg + electricity) per part and in total. Rough model, not a real slicing.
+- Estimated **filament, print time, energy (kWh), cost** (filament at €11/kg + electricity) per part and in total. Rough model, not a real slicing.
 - Responsive layout, including ultrawide monitors.
 
 **Status:** geometry matches the original Fusion design (volumes within 0.05 %). Real drawer fit, printing of the short bridges and the time/cost estimate still need to be checked against real prints.
